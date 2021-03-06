@@ -31,6 +31,8 @@ struct LabelledGraph {
 
     node_styles: Vec<Style>,
 
+    attr: Option<String>,
+
     /// Each edge relates a from-index to a to-index along with a
     /// label; `edges` collects them.
     edges: Vec<Edge>,
@@ -74,12 +76,14 @@ impl LabelledGraph {
         node_labels: Trivial,
         edges: Vec<Edge>,
         node_styles: Option<Vec<Style>>,
+        attr: Option<String>,
     ) -> LabelledGraph {
         let count = node_labels.len();
         LabelledGraph {
             name,
             node_labels: node_labels.to_opt_strs(),
             edges,
+            attr,
             node_styles: match node_styles {
                 Some(nodes) => nodes,
                 None => vec![Style::None; count],
@@ -90,7 +94,7 @@ impl LabelledGraph {
 
 impl LabelledGraphWithEscStrs {
     fn new(name: &'static str, node_labels: Trivial, edges: Vec<Edge>) -> LabelledGraphWithEscStrs {
-        LabelledGraphWithEscStrs { graph: LabelledGraph::new(name, node_labels, edges, None) }
+        LabelledGraphWithEscStrs { graph: LabelledGraph::new(name, node_labels, edges, None, None) }
     }
 }
 
@@ -118,6 +122,10 @@ impl<'a> Labeller<'a> for LabelledGraph {
     }
     fn node_style(&'a self, n: &Node) -> Style {
         self.node_styles[*n]
+    }
+
+    fn node_attr(&'a self, _n: &Node) -> Option<String> {
+        self.attr.as_ref().cloned()
     }
     fn edge_style(&'a self, e: &&'a Edge) -> Style {
         e.style
@@ -192,7 +200,7 @@ fn test_input(g: LabelledGraph) -> io::Result<String> {
 #[test]
 fn empty_graph() {
     let labels: Trivial = UnlabelledNodes(0);
-    let r = test_input(LabelledGraph::new("empty_graph", labels, vec![], None));
+    let r = test_input(LabelledGraph::new("empty_graph", labels, vec![], None, None));
     assert_eq!(
         r.unwrap(),
         r#"digraph empty_graph {
@@ -204,7 +212,7 @@ fn empty_graph() {
 #[test]
 fn single_node() {
     let labels: Trivial = UnlabelledNodes(1);
-    let r = test_input(LabelledGraph::new("single_node", labels, vec![], None));
+    let r = test_input(LabelledGraph::new("single_node", labels, vec![], None, None));
     assert_eq!(
         r.unwrap(),
         r#"digraph single_node {
@@ -218,11 +226,25 @@ fn single_node() {
 fn single_node_with_style() {
     let labels: Trivial = UnlabelledNodes(1);
     let styles = Some(vec![Style::Dashed]);
-    let r = test_input(LabelledGraph::new("single_node", labels, vec![], styles));
+    let r = test_input(LabelledGraph::new("single_node", labels, vec![], styles, None));
     assert_eq!(
         r.unwrap(),
         r#"digraph single_node {
     N0[label="N0"][style="dashed"];
+}
+"#
+    );
+}
+#[test]
+fn single_node_with_attr() {
+    let labels: Trivial = UnlabelledNodes(1);
+    let styles = Some(vec![Style::Dashed]);
+    let attr = r#"color="red", fontcolor="red""#.to_string();
+    let r = test_input(LabelledGraph::new("single_node", labels, vec![], styles, Some(attr)));
+    assert_eq!(
+        r.unwrap(),
+        r#"digraph single_node {
+    N0[label="N0"][style="dashed"][color="red", fontcolor="red"];
 }
 "#
     );
@@ -236,6 +258,7 @@ fn single_edge() {
         labels,
         vec![edge(0, 1, "E", Style::None)],
         None,
+        None
     ));
     assert_eq!(
         result.unwrap(),
@@ -256,6 +279,7 @@ fn single_edge_with_style() {
         labels,
         vec![edge(0, 1, "E", Style::Bold)],
         None,
+        None
     ));
     assert_eq!(
         result.unwrap(),
@@ -277,6 +301,7 @@ fn test_some_labelled() {
         labels,
         vec![edge(0, 1, "A-1", Style::None)],
         styles,
+        None
     ));
     assert_eq!(
         result.unwrap(),
@@ -296,7 +321,7 @@ fn single_cyclic_node() {
         "single_cyclic_node",
         labels,
         vec![edge(0, 0, "E", Style::None)],
-        None,
+        None, None
     ));
     assert_eq!(
         r.unwrap(),
@@ -320,7 +345,7 @@ fn hasse_diagram() {
             edge(1, 3, "", Style::None),
             edge(2, 3, "", Style::None),
         ],
-        None,
+        None, None,
     ));
     assert_eq!(
         r.unwrap(),

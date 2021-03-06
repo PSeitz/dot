@@ -458,6 +458,12 @@ pub trait Labeller<'a> {
         Style::None
     }
 
+    /// Adds attr to `n` that will be used in the rendered output.
+    /// Multiple attr can be returned in the String, e.g. `color="red", fontcolor="red"`
+    fn node_attr(&'a self, _n: &Self::Node) -> Option<String> {
+        None
+    }
+
     /// Maps `e` to a style that will be used in the rendered output.
     fn edge_style(&'a self, _e: &Self::Edge) -> Style {
         Style::None
@@ -645,7 +651,6 @@ where
         writeln!(w, r#"    edge[{}];"#, content_attrs_str)?;
     }
 
-    // let mut text = Vec::new();
     for n in g.nodes().iter() {
         write!(w, "    ")?;
         let id = g.node_id(n);
@@ -663,14 +668,16 @@ where
             write!(w, "[style=\"{}\"]", style.as_slice()).unwrap();
         }
 
+        let attr = g.node_attr(n);
+        if let Some(attr) = attr {
+            write!(w, "[{}]", attr).unwrap();
+        }
+
         if let Some(s) = g.node_shape(n) {
             write!(w, "[shape={}]", &s.to_dot_string()).unwrap();
         }
 
         writeln!(w, ";").unwrap();
-        // w.write_str(&text[..])?;
-
-        // text.clear();
     }
 
     for e in g.edges().iter() {
@@ -693,7 +700,6 @@ where
         }
 
         writeln!(w, ";").unwrap();
-        // w.write_all(&text[..])?;
 
     }
 
