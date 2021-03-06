@@ -39,7 +39,7 @@
 //! ```rust
 //! #![feature(rustc_private)]
 //!
-//! use std::io::Write;
+//! use core::fmt::Write;
 //!
 //! type Nd = isize;
 //! type Ed = (isize,isize);
@@ -85,15 +85,13 @@
 //!     fn target(&self, e: &Ed) -> Nd { let &(_,t) = e; t }
 //! }
 //!
-//! # pub fn main() { render_to(&mut Vec::new()) }
+//! # pub fn main() { render_to(&mut String::new()) }
 //! ```
 //!
 //! ```no_run
-//! # pub fn render_to<W:std::io::Write>(output: &mut W) { unimplemented!() }
+//! # pub fn render_to<W:core::fmt::Write>(output: &mut W) { unimplemented!() }
 //! pub fn main() {
-//!     use std::fs::File;
-//!     let mut f = File::create("example1.dot").unwrap();
-//!     render_to(&mut f)
+//!     render_to(&mut String::new())
 //! }
 //! ```
 //!
@@ -143,7 +141,7 @@
 //! ```rust
 //! #![feature(rustc_private)]
 //!
-//! use std::io::Write;
+//! use core::fmt::Write;
 //!
 //! type Nd = usize;
 //! type Ed<'a> = &'a (usize, usize);
@@ -181,15 +179,13 @@
 //!     fn target(&self, e: &Ed) -> Nd { let & &(_,t) = e; t }
 //! }
 //!
-//! # pub fn main() { render_to(&mut Vec::new()) }
+//! # pub fn main() { render_to(&mut String::new()) }
 //! ```
 //!
 //! ```no_run
-//! # pub fn render_to<W:std::io::Write>(output: &mut W) { unimplemented!() }
+//! # pub fn render_to<W:core::fmt::Write>(output: &mut W) { unimplemented!() }
 //! pub fn main() {
-//!     use std::fs::File;
-//!     let mut f = File::create("example2.dot").unwrap();
-//!     render_to(&mut f)
+//!     render_to(&mut String::new())
 //! }
 //! ```
 //!
@@ -204,7 +200,7 @@
 //! ```rust
 //! #![feature(rustc_private)]
 //!
-//! use std::io::Write;
+//! use core::fmt::Write;
 //!
 //! type Nd<'a> = (usize, &'a str);
 //! type Ed<'a> = (Nd<'a>, Nd<'a>);
@@ -250,15 +246,13 @@
 //!     fn target(&self, e: &Ed<'a>) -> Nd<'a> { let &(_,t) = e; t }
 //! }
 //!
-//! # pub fn main() { render_to(&mut Vec::new()) }
+//! # pub fn main() { render_to(&mut String::new()) }
 //! ```
 //!
 //! ```no_run
-//! # pub fn render_to<W:std::io::Write>(output: &mut W) { unimplemented!() }
+//! # pub fn render_to<W:core::fmt::Write>(output: &mut W) { unimplemented!() }
 //! pub fn main() {
-//!     use std::fs::File;
-//!     let mut f = File::create("example3.dot").unwrap();
-//!     render_to(&mut f)
+//!     render_to(&mut String::new())
 //! }
 //! ```
 //!
@@ -274,11 +268,11 @@
 )]
 #![feature(nll)]
 
+use core::fmt::Write;
 use LabelText::*;
 
 use std::borrow::Cow;
-use std::io;
-use std::io::prelude::*;
+
 
 /// The text for a graphviz label on a node or edge.
 pub enum LabelText<'a> {
@@ -606,7 +600,7 @@ pub fn default_options() -> Vec<RenderOption> {
 
 /// Renders directed graph `g` into the writer `w` in DOT syntax.
 /// (Simple wrapper around `render_opts` that passes a default set of options.)
-pub fn render<'a, N, E, G, W>(g: &'a G, w: &mut W) -> io::Result<()>
+pub fn render<'a, N, E, G, W>(g: &'a G, w: &mut W) -> Result<(), std::fmt::Error>
 where
     N: Clone + 'a,
     E: Clone + 'a,
@@ -618,7 +612,7 @@ where
 
 /// Renders directed graph `g` into the writer `w` in DOT syntax.
 /// (Main entry point for the library.)
-pub fn render_opts<'a, N, E, G, W>(g: &'a G, w: &mut W, options: &[RenderOption]) -> io::Result<()>
+pub fn render_opts<'a, N, E, G, W>(g: &'a G, w: &mut W, options: &[RenderOption]) -> Result<(), std::fmt::Error>
 where
     N: Clone + 'a,
     E: Clone + 'a,
@@ -651,32 +645,32 @@ where
         writeln!(w, r#"    edge[{}];"#, content_attrs_str)?;
     }
 
-    let mut text = Vec::new();
+    // let mut text = Vec::new();
     for n in g.nodes().iter() {
         write!(w, "    ")?;
         let id = g.node_id(n);
 
         let escaped = &g.node_label(n).to_dot_string();
 
-        write!(text, "{}", id.as_slice()).unwrap();
+        write!(w, "{}", id.as_slice()).unwrap();
 
         if !options.contains(&RenderOption::NoNodeLabels) {
-            write!(text, "[label={}]", escaped).unwrap();
+            write!(w, "[label={}]", escaped).unwrap();
         }
 
         let style = g.node_style(n);
         if !options.contains(&RenderOption::NoNodeStyles) && style != Style::None {
-            write!(text, "[style=\"{}\"]", style.as_slice()).unwrap();
+            write!(w, "[style=\"{}\"]", style.as_slice()).unwrap();
         }
 
         if let Some(s) = g.node_shape(n) {
-            write!(text, "[shape={}]", &s.to_dot_string()).unwrap();
+            write!(w, "[shape={}]", &s.to_dot_string()).unwrap();
         }
 
-        writeln!(text, ";").unwrap();
-        w.write_all(&text[..])?;
+        writeln!(w, ";").unwrap();
+        // w.write_str(&text[..])?;
 
-        text.clear();
+        // text.clear();
     }
 
     for e in g.edges().iter() {
@@ -687,21 +681,20 @@ where
         let source_id = g.node_id(&source);
         let target_id = g.node_id(&target);
 
-        write!(text, "{} -> {}", source_id.as_slice(), target_id.as_slice()).unwrap();
+        write!(w, "{} -> {}", source_id.as_slice(), target_id.as_slice()).unwrap();
 
         if !options.contains(&RenderOption::NoEdgeLabels) {
-            write!(text, "[label={}]", escaped_label).unwrap();
+            write!(w, "[label={}]", escaped_label).unwrap();
         }
 
         let style = g.edge_style(e);
         if !options.contains(&RenderOption::NoEdgeStyles) && style != Style::None {
-            write!(text, "[style=\"{}\"]", style.as_slice()).unwrap();
+            write!(w, "[style=\"{}\"]", style.as_slice()).unwrap();
         }
 
-        writeln!(text, ";").unwrap();
-        w.write_all(&text[..])?;
+        writeln!(w, ";").unwrap();
+        // w.write_all(&text[..])?;
 
-        text.clear();
     }
 
     writeln!(w, "}}")

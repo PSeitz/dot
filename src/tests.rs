@@ -1,7 +1,6 @@
 use super::LabelText::{self, EscStr, HtmlStr, LabelStr};
 use super::{render, Edges, GraphWalk, Id, Labeller, Nodes, Style};
 use std::io;
-use std::io::prelude::*;
 use NodeLabels::*;
 
 /// each node is an index in a vector in the graph.
@@ -181,11 +180,9 @@ impl<'a> GraphWalk<'a> for LabelledGraphWithEscStrs {
 }
 
 fn test_input(g: LabelledGraph) -> io::Result<String> {
-    let mut writer = Vec::new();
+    let mut writer = String::new();
     render(&g, &mut writer).unwrap();
-    let mut s = String::new();
-    Read::read_to_string(&mut &*writer, &mut s)?;
-    Ok(s)
+    Ok(writer)
 }
 
 // All of the tests use raw-strings as the format for the expected outputs,
@@ -356,7 +353,7 @@ fn left_aligned_text() {
         "afterward",
     ]);
 
-    let mut writer = Vec::new();
+    let mut writer = String::new();
 
     let g = LabelledGraphWithEscStrs::new(
         "syntax_tree",
@@ -370,11 +367,11 @@ fn left_aligned_text() {
     );
 
     render(&g, &mut writer).unwrap();
-    let mut r = String::new();
-    Read::read_to_string(&mut &*writer, &mut r).unwrap();
+    // let mut r = String::new();
+    // Read::read_to_string(&mut &*writer, &mut r).unwrap();
 
     assert_eq!(
-        r,
+        writer,
         r#"digraph syntax_tree {
     N0[label="if test {\l    branch1\l} else {\l    branch2\l}\lafterward\l"];
     N1[label="branch1"];
