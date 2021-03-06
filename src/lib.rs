@@ -40,7 +40,6 @@
 //! #![feature(rustc_private)]
 //!
 //! use std::io::Write;
-//! use rustc_graphviz as dot;
 //!
 //! type Nd = isize;
 //! type Ed = (isize,isize);
@@ -145,7 +144,6 @@
 //! #![feature(rustc_private)]
 //!
 //! use std::io::Write;
-//! use rustc_graphviz as dot;
 //!
 //! type Nd = usize;
 //! type Ed<'a> = &'a (usize, usize);
@@ -207,7 +205,6 @@
 //! #![feature(rustc_private)]
 //!
 //! use std::io::Write;
-//! use rustc_graphviz as dot;
 //!
 //! type Nd<'a> = (usize, &'a str);
 //! type Ed<'a> = (Nd<'a>, Nd<'a>);
