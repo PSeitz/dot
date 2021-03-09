@@ -37,7 +37,6 @@
 //! which is cyclic.
 //!
 //! ```rust
-//! #![feature(rustc_private)]
 //!
 //! use core::fmt::Write;
 //!
@@ -139,7 +138,6 @@
 //! entity `&sube`).
 //!
 //! ```rust
-//! #![feature(rustc_private)]
 //!
 //! use core::fmt::Write;
 //!
@@ -198,7 +196,6 @@
 //! Hasse-diagram for the subsets of the set `{x, y}`.
 //!
 //! ```rust
-//! #![feature(rustc_private)]
 //!
 //! use core::fmt::Write;
 //!
@@ -266,7 +263,6 @@
     html_root_url = "https://doc.rust-lang.org/nightly/nightly-rustc/",
     test(attr(allow(unused_variables), deny(warnings)))
 )]
-#![feature(nll)]
 
 use core::fmt::Write;
 use LabelText::*;
